@@ -10,16 +10,16 @@ module.exports = {
 };
 
 var builtinProcedures = {
-	'bin-plus': function (a, b) {
+	'binary-sum': function (a, b) {
 		return new MVal('number', a.value + b.value);
 	},
-	'bin-min': function (a, b) {
+	'binary-subtract': function (a, b) {
 		return new MVal('number', a.value - b.value);
 	},
-	'bin-mult': function (a, b) {
+	'binary-multiply': function (a, b) {
 		return new MVal('number', a.value * b.value);
 	},
-	'bin-div': function (a, b) {
+	'binary-divide': function (a, b) {
 		return new MVal('number', a.value / b.value);
 	},
 	'>': function (a, b) {

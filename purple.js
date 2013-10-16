@@ -3,17 +3,7 @@ var parser = require('./parser'),
 	runtime = require('./runtime'),
 	Vm = runtime.Vm;
 
-var base = [
-	'(define (tr-plus acc . values) (if (null? values) acc (apply tr-plus (cons (bin-plus acc (car values)) (cdr values)))))',
-	'(define (+ . values) (apply tr-plus (cons 0 values)))',
-	'(define (tr-min acc . values) (if (null? values) acc (apply tr-min (cons (bin-min acc (car values)) (cdr values)))))',
-	'(define (- . values) (if (null? values) 0 (if (null? (cdr values)) (bin-min 0 (car values)) (apply tr-min values))))',
-	'(define (tr-mult acc . values) (if (null? values) acc (apply tr-mult (cons (bin-mult acc (car values)) (cdr values)))))',
-	'(define (* . values) (apply tr-mult (cons 1 values)))',
-	'(define (tr-div acc . values) (if (null? values) acc (apply tr-div (cons (bin-div acc (car values)) (cdr values)))))',
-	'(define (/ . values) (if (null? values) 0 (if (null? (cdr values)) (bin-div 1 (car values)) (apply tr-min values))))',
-	'(define call/cc call-with-current-continuation)',
-	];
+var base = require('fs').readFileSync('base.scm', 'utf8');
 
 var tests = [
 	{ text: '1234', val: { type: 'number', value: 1234 } },
@@ -100,21 +90,28 @@ var tests = [
 	{ text: '+', val: { type: 'procedure' } },
 	{ text: 'call/cc', val: { type: 'procedure' } },
 	{ text: '#!nodebug' },
+	{ text: '(define two 2) two', val: { type: 'number', value: 2 } },
+	{ text: '  ;comment\n5 ;comment\n', val: { type: 'number', value: 5 } },
+	{ text: '(+ 4 5))', err: 'unexpectedClosingBracket' },
+	{ text: '' },
 //	{ text: '', val: { type: '', value:  } },
 ];
 
 function runTests () {
 	var vm = new Vm(function (vm) {
-		base.forEach(function (text) {
-			vm.eval((new Parser(text)).parse());
+		var parser = new Parser(base);
+		parser.parse().forEach(function (val) {
+			vm.eval(val);
 		});
 	});
 
 	var success = tests.every(function (test) {
 		try {
 			var parser = new Parser(test.text);
-			var val = parser.parse();
-			var result = vm.eval(val);
+			var result;
+			parser.parse().forEach(function (val) {
+				result = vm.eval(val);
+			});
 		} catch (e) {
 			var err = e;
 		}
@@ -153,8 +150,9 @@ function runTests () {
 
 function runRepl () {
 	var vm = new Vm(function (vm) {
-		base.forEach(function (text) {
-			vm.eval((new Parser(text)).parse());
+		var parser = new Parser(base);
+		parser.parse().forEach(function (val) {
+			vm.eval(val);
 		});
 	});
 
@@ -166,11 +164,12 @@ function runRepl () {
 		try {
 			lines.push(line);
 			var parser = new Parser(line, 0, y++);
-			var val = parser.parse();
-			var result = vm.eval(val);
-			if (result !== undefined) {
-				console.log(';' + result);
-			}
+			parser.parse().forEach(function (val) {
+				var result = vm.eval(val);
+				if (result !== undefined) {
+					console.log(';' + result);
+				}
+			});
 		} catch (e) {
 			if (e.err) {
 				console.log(e.print(lines));

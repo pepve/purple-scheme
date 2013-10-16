@@ -92,6 +92,7 @@ Err.prototype.msg = function msg () {
 		undefinedSymbol: 'Undefined symbol',
 		unclosedString: 'Unclosed string',
 		unclosedList: 'Unclosed list',
+		unexpectedClosingBracket: 'Unexpected closing bracket',
 		unsupported: 'Unsupported feature',
 		notProcedure: 'Not a procedure',
 		alreadyDefined: 'Symbol is already defined',
