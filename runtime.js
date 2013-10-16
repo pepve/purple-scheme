@@ -65,7 +65,7 @@ function Vm (init) {
 	init(this);
 
 	this.table = new Table({}, this.table);
-	this.trace = false;
+	this.debug = false;
 }
 
 Vm.prototype.printState = function printState () {
@@ -102,7 +102,7 @@ Vm.prototype.eval = function eval (expression) {
 		this.op = this.ops;
 		this.ops = this.ops.next;
 
-		if (this.trace) {
+		if (this.debug) {
 			this.printState();
 		}
 
@@ -281,6 +281,16 @@ Vm.prototype.opExpr = function opExpr () {
 			this.newOp('peek', expr);
 			this.newOp('expr', expr.value[0]);
 		}
+
+	} else if (expr.type === 'shebang') {
+		if (expr.value === 'debug') {
+			this.debug = true;
+		} else if (expr.value === 'nodebug') {
+			this.debug = false;
+		} else {
+			throw Err.aboutVal('unsupported', expr);
+		}
+
 	} else {
 		throw new Error('unknown type');
 	}

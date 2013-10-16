@@ -60,6 +60,8 @@ MVal.prototype.toString = function toString () {
 		}
 	} else if (this.type === 'list') {
 		return '(' + this.value.join(' ') + ')';
+	} else if (this.type === 'shebang') {
+		return '';
 	} else {
 		throw new Error('unknown MVal type');
 	}

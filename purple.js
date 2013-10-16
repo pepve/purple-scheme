@@ -99,6 +99,7 @@ var tests = [
 	{ text: '(gen2)', val: { type: 'number', value: 2 } },
 	{ text: '+', val: { type: 'procedure' } },
 	{ text: 'call/cc', val: { type: 'procedure' } },
+	{ text: '#!nodebug' },
 //	{ text: '', val: { type: '', value:  } },
 ];
 

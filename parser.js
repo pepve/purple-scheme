@@ -117,6 +117,10 @@ Parser.prototype.hash = function hash () {
 	} else if (thing === 'f' || thing === 'F') {
 		return new MVal('boolean', false, [start, this.y], [this.x, this.y]);
 
+	} else if (thing[0] === '!') {
+		return new MVal('shebang', thing.substring(1), [start, this.y],
+			[this.x, this.y]);
+
 	} else {
 		throw Err.aboutText('unsupported', [start - 1, this.y],
 			[this.x, this.y]);
