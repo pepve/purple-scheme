@@ -55,16 +55,16 @@ var builtinProcedures = {
 };
 
 function Vm (init) {
-	this.table = new Table({});
+	this.table = new Table();
 
 	for (var symbol in builtinProcedures) {
-		this.table.symbols[symbol] = new MVal('procedure',
-			{ builtin: builtinProcedures[symbol], name: symbol });
+		this.table.define(new MVal('symbol', symbol), new MVal('procedure',
+			{ builtin: builtinProcedures[symbol], name: symbol }));
 	}
 
 	init(this);
 
-	this.table = new Table({}, this.table);
+	this.table = this.table.open();
 	this.debug = false;
 }
 
@@ -206,34 +206,29 @@ Vm.prototype.opCall = function opCall () {
 Vm.prototype.callUser = function callUser (proc) {
 	var values = this.op.arg.r;
 	var formals = proc.value.formals;
-	var actuals = {};
+	var table = proc.value.closed.open();
 
 	for (var i = 0; i < formals.length; i++) {
-		if (formals[i] === '.') {
-			actuals[formals[i + 1]] = new MVal('list', values.slice(i));
+		if (formals[i].value === '.') {
+			table.define(formals[i + 1], new MVal('list', values.slice(i)))
 			break;
 		} else {
-			actuals[formals[i]] = values[i];
+			table.define(formals[i], values[i]);
 		}
 	}
 
-	var table = new Table(actuals, proc.value.closed);
 	for (var i = proc.value.body.length - 1; i >= 0; i--) {
 		this.newOp('expr', proc.value.body[i], table);
 	}
 };
 
 Vm.prototype.opDef = function opDef () {
-	this.op.table.symbols[this.op.arg] = this.result;
+	this.op.table.define(this.op.arg, this.result);
 	this.result = undefined;
 };
 
 Vm.prototype.opAss = function opAss () {
-	var table = this.op.table;
-	while (table && table.symbols[this.op.arg] === undefined) {
-		table = table.parent;
-	}
-	table.symbols[this.op.arg] = this.result;
+	this.op.table.assign(this.op.arg, this.result);
 	this.result = undefined;
 };
 
@@ -255,7 +250,7 @@ Vm.prototype.opExpr = function opExpr () {
 		this.result = expr;
 
 	} else if (expr.type === 'symbol') {
-		var v = this.op.table.lookup(expr.value);
+		var v = this.op.table.lookup(expr);
 
 		if (v === undefined) {
 			throw Err.aboutVal('undefinedSymbol', expr);
@@ -298,21 +293,21 @@ Vm.prototype.opExpr = function opExpr () {
 
 Vm.prototype['special-form-define'] = function (expr) {
 	if (expr.value[1].type === 'symbol') {
-		if (this.op.table.defined(expr.value[1].value)) {
+		if (this.op.table.defined(expr.value[1])) {
 			throw Err.aboutVal('alreadyDefined', expr.value[1]);
 		} else {
-			this.newOp('def', expr.value[1].value);
+			this.newOp('def', expr.value[1]);
 			this.newOp('expr', expr.value[2]);
 		}
 
 	} else if (expr.value[1].type === 'list') {
-		if (this.op.table.defined(expr.value[1].value[0].value)) {
+		if (this.op.table.defined(expr.value[1].value[0])) {
 			throw Err.aboutVal('alreadyDefined', expr.value[1].value[0]);
 		} else {
-			this.newOp('def', expr.value[1].value[0].value);
+			this.newOp('def', expr.value[1].value[0]);
 			this.result = new MVal('procedure',
 				{ closed: this.op.table,
-				  formals: pluck(expr.value[1].value.slice(1), 'value'),
+				  formals: expr.value[1].value.slice(1),
 				  body: expr.value.slice(2) },
 				[expr.x, expr.y]);
 		}
@@ -324,10 +319,10 @@ Vm.prototype['special-form-define'] = function (expr) {
 
 Vm.prototype['special-form-set!'] = function (expr) {
 	if (expr.value[1].type === 'symbol') {
-		if (this.op.table.lookup(expr.value[1].value) === undefined) {
+		if (this.op.table.lookup(expr.value[1]) === undefined) {
 			throw Err.aboutVal('undefinedSymbol', expr.value[1]);
 		} else {
-			this.newOp('ass', expr.value[1].value);
+			this.newOp('ass', expr.value[1]);
 			this.newOp('expr', expr.value[2]);
 		}
 
@@ -339,7 +334,7 @@ Vm.prototype['special-form-set!'] = function (expr) {
 Vm.prototype['special-form-lambda'] = function (expr) {
 	this.result = new MVal('procedure',
 		{ closed: this.op.table,
-		  formals: pluck(expr.value[1].value, 'value'),
+		  formals: expr.value[1].value,
 		  body: expr.value.slice(2) },
 		[expr.x, expr.y]);
 };

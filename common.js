@@ -132,14 +132,13 @@ Err.prototype.print = function print (lines) {
 	}
 };
 
-function Table (symbols, parent) {
-	this.symbols = symbols;
-	this.parent = parent;
+function Table () {
+	this.symbols = {};
 }
 
 Table.prototype.lookup = function lookup (symbol) {
-	if (this.symbols[symbol] !== undefined) {
-		return this.symbols[symbol];
+	if (this.symbols[symbol.value] !== undefined) {
+		return this.symbols[symbol.value];
 	} else if (this.parent) {
 		return this.parent.lookup(symbol);
 	} else {
@@ -148,7 +147,25 @@ Table.prototype.lookup = function lookup (symbol) {
 };
 
 Table.prototype.defined = function lookup (symbol) {
-	return this.symbols[symbol] !== undefined;
+	return this.symbols[symbol.value] !== undefined;
+};
+
+Table.prototype.define = function define (symbol, val) {
+	this.symbols[symbol.value] = val;
+};
+
+Table.prototype.assign = function assign (symbol, val) {
+	if (this.symbols[symbol.value] !== undefined) {
+		this.symbols[symbol.value] = val;
+	} else if (this.parent) {
+		this.parent.assign(symbol, val);
+	}
+};
+
+Table.prototype.open = function open () {
+	var table = new Table();
+	table.parent = this;
+	return table;
 };
 
 function Op (act, arg, table, next) {
