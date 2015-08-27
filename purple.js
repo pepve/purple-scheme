@@ -95,6 +95,7 @@ var tests = [
 	{ text: '#!nodebug' },
 	{ text: '(define two 2) two', val: { type: 'number', value: 2 } },
 	{ text: '  ;comment\n5 ;comment\n', val: { type: 'number', value: 5 } },
+	{ text: ';(comment\n;  comment)\n' },
 	{ text: '(+ 4 5))', err: 'unexpectedClosingBracket' },
 	{ text: '' },
 //	{ text: '', val: { type: '', value:  } },

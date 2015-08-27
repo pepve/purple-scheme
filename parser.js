@@ -149,7 +149,7 @@ Parser.prototype.whitespace = function whitespace () {
 	while (this.x < this.text.length && this.isWhitespace()) {
 		this.x++;
 	}
-	if (this.text[this.x] === ';') {
+	while (this.x < this.text.length && this.text[this.x] === ';') {
 		this.x++;
 		while (this.x < this.text.length && this.text[this.x] !== '\r' &&
 				this.text[this.x] !== '\n') {
